@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  mysqldb:
+    image: mysql:5.7
+    platform: linux/amd76
+    env_file: ./.env
+    environment:
+      - MYSQL_ROOT_PASSWORD:$MYSQL_ROOT_PASSWORD
+      - MYSQL_DATABASE:$MYSQL_DATABASE
+      - MYSQL_USER:$MYSQL_USER
+      - MYSQL_PASSWORD:$MYSQL_PASSWORD
+    ports:
+      - $MYSQL_LOCAL_PORT:$MYSQL_DOCKER_PORT
+    volumes:
+      - db:/var/lib/mysql
+    networks:
+      - backend
+
+  backend:
+    depends_on:
+      - mysqldb
+    build: ./backend
+    restart: unless-stopped
+    env_file: ./.env
+    ports:
+      - $NODE_LOCAL_PORT:$NODE_DOCKER_PORT
+    networks:
+      - backend
+      - frontend
+
+  frontend:
+    depends_on:
+      - backend
+    build:
+      context: ./frontend
+      args:
+        - REACT_APP_API_BASE_URL=$CLIENT_API_BASE_URL
+    ports:
+      - $REACT_LOCAL_PORT:$REACT_DOCKER_PORT
+    networks:
+      - frontend
+
+volumes: 
+  db:
+
+networks:
+  backend:
+  frontend:
